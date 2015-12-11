@@ -13,7 +13,7 @@ from requests.auth import HTTPBasicAuth
 import requests
 import pandas as pd
 import nltk
-nltk.data.path.append('.')
+nltk.data.path = ['./nltk_data']
 import re
 import string
 import itertools
