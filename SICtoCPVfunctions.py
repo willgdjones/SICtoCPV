@@ -13,6 +13,7 @@ from requests.auth import HTTPBasicAuth
 import requests
 import pandas as pd
 import nltk
+nltk.data.path.append('.')
 import re
 import string
 import itertools
