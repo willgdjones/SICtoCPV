@@ -1,10 +1,24 @@
-<h1>Enter a SIC code</h1>
-<form action='/convert'>
-  <input id="SICcode" name="SICcode" type="text" value="" placeholder="E.g. 95240"/>
-  <button type="submit">Convert</button>
-</form>
 
-<!--<a href="#">WTF is a SIC code?</a>-->
-<a href="https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/455263/SIC_codes_V2.pdf">Check out some more example SIC codes</a>
+{% extends 'base.html' %}
 
+{% block body %}
+
+<div class=container>
+  <div class="row">
+    <div class="col-lg-6">
+      <h1>SIC to CPV code converter</h1>
+
+      <h2>Enter a SIC code</h2>
+      <form action='/convert'>
+        <input id="SICcode" name="SICcode" type="text" value="" placeholder="E.g. 95240"/>
+        <button type="submit">Convert</button>
+      </form>
+
+      <!--<a href="#">WTF is a SIC code?</a>-->
+      <a href="https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/455263/SIC_codes_V2.pdf">Check out some more example SIC codes</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
 

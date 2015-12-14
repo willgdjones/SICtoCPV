@@ -1,29 +1,39 @@
+{% extends 'base.html' %}
+
+{% block body %}
 
 
-<h1>Results</h1>
-<h2>Your SIC code:</h2>
-<p>{{CPVlist[0][1]}}, {{CPVlist[0][0]}}</p>
+<div class="container">
+  <div class="row">
+
+
+    <div class="col-lg-8">
+      <h2>Relevant CPV codes (description, cpv_code, score)</h2>
+      <a href="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ:L:2008:074:0001:0375:EN:PDF"> CPV codes come from this document</a>
+
+      <ul>
+        {% for cpv_line in CPVlist[1][0:20] %}
+        <li> {{cpv_line[0]}}, {{cpv_line[1]}}, {{cpv_line[2]}} </li>
+        {% endfor %}
+      </ul> 
+    </div>
+
+    <div class="col-lg-4">
+      <h2>Your SIC code:</h2>
+      <p>{{CPVlist[0][1]}}, {{CPVlist[0][0]}}</p>
+    </div>
+  </div>
 
 
 
-<h2>Relevant CPV codes (description, cpv_code, score)</h2>
-<a href="http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ:L:2008:074:0001:0375:EN:PDF"> CPV codes come from this document</a>
+    <h1>Enter another SIC code</h1>
+    <form action='/convert'>
+      <input id="SICcode" name="SICcode" type="text" value="" placeholder="E.g. 95240"/>
+      <button type="submit">Convert</button>
+    </form>
 
-<ul>
-{% for cpv_line in CPVlist[1][0:20] %}
-<li> {{cpv_line[0]}}, {{cpv_line[1]}}, {{cpv_line[2]}} </li>
-{% endfor %}
-</ul> 
-  
+    <!--<a href="#">WTF is a SIC code?</a>-->
+    <a href="https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/455263/SIC_codes_V2.pdf">Check out some more example SIC codes</a>
+</div>
 
-
-<h1>Enter another SIC code</h1>
-<form action='/convert'>
-  <input id="SICcode" name="SICcode" type="text" value="" placeholder="E.g. 95240"/>
-  <button type="submit">Convert</button>
-</form>
-
-<!--<a href="#">WTF is a SIC code?</a>-->
-<a href="https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/455263/SIC_codes_V2.pdf">Check out some more example SIC codes</a>
-
-
+{% endblock %}
