@@ -1,11 +1,78 @@
 
 # coding: utf-8
 
-# This is best explained I think with an example. Given a company with SIC codes ****, which CPV codes are most relevant to this company? 
+# # SIC to CPV converter
 
-# # Import modules
+# This is best explained I think with an example.
+# 
+# The Complete Leather Restoration Co. Limited is a company located in Leeds, and has a SIC code registered at companies house of http://companydb.uk/08724430-the-complete-leather-restoration-co-limited.
+# 
+# Given a company with SIC codes 95240, which CPV codes best represent what this company does? And using this we can query contracts finder API to find relevant contracts in their local area.
+# 
+# Here are the steps and results in turn which the function SICtoCPV executes:
+# 
+# <b>Get the descriptive title of the SIC codes</b>
+# 
+# `company_sic_title = lookup_sic_title(95240)`
+# 
+# >"Repair of furniture and home furnishings"
+# 
+# <b>Pull out the keywords from this title</b>
+# 
+# `keywords = get_keywords(company_sic_title)`
+# 
+# >`['repair', 'furniture', 'home', 'furnishings']`
+# 
+# <b>Get all CPV codes whose title mention these keywords in the description. A set of CPVs is returned for each keyword, in this case 4.</b>
+# 
+# `cpv_list = get_cpv_list(keywords)`
+# 
+# >`[[u'37414300',  u'44113700',  u'50860000',  ...  u'50884000',  u'72267000',  u'72267200'], [u'30000000', u'30100000',  u'39161000',  ...  u'45421153',  u'50850000',  u'79934000'], [u'34144800',  u'38561110',  u'45215212',  ...  u'85312200',  u'98513310'], [u'39000000', u'39143110', u'39143113', u'39516100']]`
+# 
+# <b>Get all the possible CPV prefixes from these sets, again return one prefix set per keyword, in this case 4.</b>
+# 
+# `cpv_prefixes = get_cpv_prefixes(cpv_list)`
+# 
+# >`[{u'37', ... u'722672'}, {u'3', ..., u'79934'}, {u'34', ..., u'9851331'}, {u'39', ..., u'395161'}]`
+# 
+# <b>Find out how often these CPV frequencies appear in independent keyword sets. We can see some appear once, twice and even three times.</b>
+# 
+# `intersection_frequencies = get_intersection_frequencies(cpv_prefixes)`
+# 
+# >`{u'3': 1, u'301': 1, ... , u'391431': 2, ..., u'452': 3, ... , u'5085': 2, u'9851331': 1}`
+# 
+# <b>Weight the importance of these CPV prefixes, multiply the frequency by how specific the CPV is.</b>
+# 
+# `cpv_scores = get_cpv_scores(intersection_frequencies)`
+# 
+# >`{u'3': 1, u'301': 3, ... , u'391431': 12, ..., u'452': 9, ... , u'5085': 8, u'9851331': 7}`
+# 
+# <b>Sort these CPV is order of score</b>
+# 
+# `top_cpvs = get_top_CPVs(cpv_scores)`
+# 
+# >`[(u'504114', 12),
+# (u'391431', 12),
+# (u'45233', 10),
+# (u'39143', 10),
+# ... ]`
+# 
+# <b>Add the titles to these return SIC codes - they mostly seem pretty relevant.</b>
+# 
+# `top_cpvs = add_cpv_titles(top_cpvs)`
+# 
+# >`[(u'Repair and maintenance services of tachometers', u'504114', 12),
+# (u'Bedroom furniture', u'391431', 12),
+# (u'Construction, foundation and surface works for highways, roads', u'45233', 10),
+# (u'Bedroom, dining room and living-room furniture', u'39143', 10),
+# ... ]`
+# 
+# 
+# Thanks to https://github.com/nathanpitman/sic-codes for suppling the database of SIC code descriptions so I didn't have to crawl them from the raw HTML :). 
 
-# In[3]:
+# ## Import modules
+
+# In[2]:
 
 import json
 from datetime import datetime, timedelta
@@ -20,13 +87,13 @@ import itertools
 import numpy as np
 
 
-# # Helper functions
+# ## Helper functions
 
 # ### Pad out SIC codes
 
 # Pad CPV prefixes out with zeros to be length 8.
 
-# In[ ]:
+# In[3]:
 
 def pad(cpv):
     if len(cpv) > 8:
@@ -46,7 +113,7 @@ def pad(cpv):
 # 
 # 
 
-# In[ ]:
+# In[4]:
 
 def tokenise(s):
     exclude = set(string.punctuation)
@@ -54,9 +121,9 @@ def tokenise(s):
     return re.sub(regex,"",s).lower()
 
 
-# # Load CPV and SIC codes databases
+# ## Load CPV and SIC codes databases
 
-# In[ ]:
+# In[5]:
 
 cabinet_api_key='o0NNKWxzI6D_JvHlDYo9Pa1l05eqnXvPwaxtk8Nx'
 
@@ -68,7 +135,7 @@ sic_codes['tokenised_description'] = sic_codes['description'].apply(tokenise)
 
 
 
-# # Core functions
+# ## Core functions
 
 # ### Get keywords 
 
@@ -116,7 +183,7 @@ def lookup_sic_title(sic_code):
 # 
 # `[[u'37414300',  u'44113700',  u'50860000',  ...  u'50884000',  u'72267000',  u'72267200'], [u'30000000', u'30100000',  u'39161000',  ...  u'45421153',  u'50850000',  u'79934000'], [u'34144800',  u'38561110',  u'45215212',  ...  u'85312200',  u'98513310'], [u'39000000', u'39143110', u'39143113', u'39516100']]`
 
-# In[39]:
+# In[8]:
 
 ### Get CPV codes
 def get_cpv_list(keywords):
@@ -138,7 +205,7 @@ def get_cpv_list(keywords):
 # 
 # `create_cpv_sets([[u'44113700', u'44167200']]) -> [{u'44', u'441', u'4411', u'44113', u'441137', u'4416', u'44167', u'441672'}]`
 
-# In[17]:
+# In[9]:
 
 def get_cpv_prefixes(cpv_list):
     cpv_sets = []
@@ -159,7 +226,7 @@ def get_cpv_prefixes(cpv_list):
 # 
 # `get_intersection_frequencies([set(['37','375']), set(['37', '42'])]) -> {'37': 2, '375': 1, '42': 1}`
 
-# In[37]:
+# In[10]:
 
 def get_intersection_frequencies(cpv_prefixes):
     
@@ -184,7 +251,7 @@ def get_intersection_frequencies(cpv_prefixes):
 
 # Given the frequency of a CPV codes, combine this with it' specificity to give it a score.
 
-# In[102]:
+# In[11]:
 
 def get_cpv_scores(intersection_frequencies):
     
@@ -201,7 +268,7 @@ def get_cpv_scores(intersection_frequencies):
 
 # Return the list of CPVs ordered by their scores
 
-# In[114]:
+# In[12]:
 
 def get_top_CPVs(cpv_scores):
     top_cpvs = [ (k,v) for (k,v) in cpv_scores.items() ]
@@ -213,7 +280,7 @@ def get_top_CPVs(cpv_scores):
 
 # The scoring heurstic is the key component of this process. Given a cpv codes with a known intersection_frequency and specificity, what score should we give it? How important is it that it is specific, and how important is it that it is highlighted by multiple keywords? Right now I just multiply them together :o).
 
-# In[99]:
+# In[13]:
 
 def scoring_heuristic(intersection_frequency, specificity):
     return intersection_frequency * specificity
@@ -224,7 +291,7 @@ def scoring_heuristic(intersection_frequency, specificity):
 
 # Add the titles of a list of CPV codes
 
-# In[133]:
+# In[14]:
 
 def add_cpv_titles(top_cpvs):
     
@@ -232,7 +299,11 @@ def add_cpv_titles(top_cpvs):
     return [(cpv_titles[i],) + top_cpvs[i] for i in range(len(top_cpvs))]
 
 
-# In[142]:
+# ### SICtoCPV
+
+# The main function to export. Takes in a SIC code, and outputs relevant CPV codes plus the titles.
+
+# In[15]:
 
 def SICtoCPV(sic_code):
     
@@ -254,3 +325,5 @@ def SICtoCPV(sic_code):
     
     return [(sic_code, company_sic_title), top_cpvs]
 
+
+# https://github.com/nathanpitman/sic-codes
